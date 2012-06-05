@@ -1,7 +1,8 @@
 <?php
+function expiry_date($certdate, $timeformat) {
+    return '';
+}
 
-require_once($CFG->dirroot.'/mod/certificate/type/shipmatenoexpiry/certificate_class.php');
-
-$cert = new shipmate_cert_no_expiry();
+require_once($CFG->dirroot.'/mod/certificate/type/shipmate/certificate_base.php');
 
 ?>
