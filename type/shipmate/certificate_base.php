@@ -2,21 +2,35 @@
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from view.php in mod/tracker
 }
+$course_item = grade_item::fetch_course_item($COURSE->id);
+$scorm_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod', 'itemmodule'=>'scorm'));
 
-
-if ($course_item = grade_item::fetch_course_item($COURSE->id)) {
-    $certrecord->certdate = time();
-    if ($scorm_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod'))) {
-        if ($scormgrade = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id))) {
-            $certrecord->certdate = $scormgrade->timemodified;
-        }
-    }
-    if ($grade = new grade_grade(array('itemid'=>$course_item->id, 'userid'=>$USER->id))) {
-        $course_item->gradetype = GRADE_TYPE_VALUE;
-        $coursegrade = grade_format_gradevalue($grade->finalgrade, $course_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
+// Date formatting - can be customized if necessary
+$certificatedate = '';
+if ($certrecord->certdate > 0) {
+    $certdate = $certrecord->certdate;
+} else {
+    if ($scormgrade = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id))) {
+        $certdate = $scormgrade->timemodified;
     } else {
-        $coursegrade = '-';
+        $certdate = 0;
     }
+}
+if ($certificate->printdate > 0) {
+    $timeformat = get_string('strftimedaydate');
+    if ($certdate != 0) {
+        $certificatedate = userdate($certdate, $timeformat);
+    } else {
+        $certificatedate = '-';
+    }
+}
+
+
+if ($grade = new grade_grade(array('itemid'=>$course_item->id, 'userid'=>$USER->id))) {
+    $course_item->gradetype = GRADE_TYPE_VALUE;
+    $coursegrade = grade_format_gradevalue($grade->finalgrade, $course_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
+} else {
+    $coursegrade = '-';
 }
 
 
@@ -37,18 +51,17 @@ if($certificate->printhours) {
 } else {
     $credithours = '';
 }
-//Print the html text
-$customtext = $certificate->customtext;
 
 //Create new PDF document
 
 $pdf = new TCPDF('L', 'pt', 'Letter', true, 'UTF-8', false);
 //$pdf->SetProtection(array('print'));
+$pdf->SetTitle($certificate->name);
 $pdf->setPrintHeader(false);
 $pdf->setPrintFooter(false);
-$pdf->setHeaderFont(array('helvetica', '', 10));
-//$pdf->setLanguageArray($l); //set language items
+
 $pdf->AddPage();
+$pdf->SetAutoPageBreak(false, 0);
 
 // Add images and lines
 $pdf->Image("$CFG->dirroot/mod/certificate/pix/borders/shipmate2.jpg", 10, 12, 770, 588);
@@ -79,7 +92,7 @@ $pdf->SetXY(540, 420);
 $pdf->MultiCell(200, 14, $address, 0, 'J');
 
 // Add text
-$pdf->Image("$CFG->dirroot/mod/certificate/pix/title.png", 115, 70);
+$pdf->Image("$CFG->dirroot/mod/certificate/pix/title.png", 115, 70, 0, 0);
 
 $pdf->SetTextColor(0,0,0);
 
@@ -88,20 +101,18 @@ $pdf->setFont("FreeSerif", "", 28);
 $pdf->MultiCell(640, 30, $classname, 0, 'C');
 
 //cert_printtext(145, 150, 'C', 'FreeSerif', 'B', 30, $classname);
-cert_printtext($pdf, 145, 230, 'C', 'FreeSerif', 'I', 20, 'presented to');
-cert_printtext($pdf, 145, 260, 'C', 'FreeSerif', 'B', 30, $studentname);
-
-$timeformat = get_string('strftimedaydate');
-$certificatedate = userdate($certrecord->certdate, $timeformat);
+cert_printtext($pdf, 35, 230, 'C', 'FreeSerif', 'I', 20, 'presented to');
+cert_printtext($pdf, 35, 260, 'C', 'FreeSerif', 'B', 30, $studentname);
 
 
-cert_printtext($pdf, 145, 310, 'C', 'FreeSerif', 'B', 20, $certificatedate);
 
-cert_printtext($pdf, 145, 340, 'C', 'FreeSerif', 'B', 20, expiry_date($certrecord->certdate, $timeformat));
+cert_printtext($pdf, 35, 310, 'C', 'FreeSerif', 'B', 20, $certificatedate);
+if ($certdate !=0) {
+    cert_printtext($pdf, 35, 340, 'C', 'FreeSerif', 'BI', 20, expiry_date($certdate, $timeformat));
+}
+cert_printtext($pdf, 35, 370, 'C', 'FreeSerif', 'B', 20, 'Score : '.$coursegrade);
+cert_printtext($pdf, 35, 540, 'C', 'FreeSerif', '', 12, "Verification code :".$code);
 
-cert_printtext($pdf, 145, 370, 'C', 'FreeSerif', 'B', 20, 'Score : '.$coursegrade);
-cert_printtext($pdf, 145, 545, 'C', 'FreeSerif', '', 12, "Verification code :".$code);
-
-cert_printtext($pdf, 150, 515, 'C', 'FreeSerif', 'I', 10, $customtext);
+cert_printtext($pdf, 30, 515, 'C', 'FreeSerif', 'I', 10, $certificate->customtext);
 
 ?>
