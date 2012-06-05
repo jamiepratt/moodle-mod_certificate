@@ -21,9 +21,11 @@ if ($certrecord->certdate > 0) {
     } else {
         $scormgrade = false;
     }
-
-    if ($scormgrade || $quizgrade) {
-        if ((($quizgrade && $scormgrade) && ($quizgrade->finalgrade > $scormgrade->finalgrade)) || $quizgrade) {
+    
+    if ($scormgrade->timemodified || $quizgrade->timemodified) {
+        if ((($quizgrade->timemodified && $scormgrade->timemodified)
+                    && ($quizgrade->finalgrade > $scormgrade->finalgrade))
+              || ($quizgrade->timemodified && !$scormgrade->timemodified)) {
             $certdate = $quizgrade->timemodified;
         } else {
             $certdate = $scormgrade->timemodified;
