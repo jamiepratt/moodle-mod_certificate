@@ -4,14 +4,30 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 $course_item = grade_item::fetch_course_item($COURSE->id);
 $scorm_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod', 'itemmodule'=>'scorm'));
+$quiz_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod', 'itemmodule'=>'quiz'));
 
 // Date formatting - can be customized if necessary
 $certificatedate = '';
 if ($certrecord->certdate > 0) {
     $certdate = $certrecord->certdate;
 } else {
-    if ($scormgrade = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id))) {
-        $certdate = $scormgrade->timemodified;
+    if ($quiz_item) {
+        $quizgrade = new grade_grade(array('itemid'=>$quiz_item->id, 'userid'=>$USER->id));
+    } else {
+        $quizgrade = false;
+    }
+    if ($scorm_item) {
+        $scormgrade = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id));
+    } else {
+        $scormgrade = false;
+    }
+
+    if ($scormgrade || $quizgrade) {
+        if ((($quizgrade && $scormgrade) && ($quizgrade->finalgrade > $scormgrade->finalgrade)) || $quizgrade) {
+            $certdate = $quizgrade->timemodified;
+        } else {
+            $certdate = $scormgrade->timemodified;
+        }
     } else {
         $certdate = 0;
     }
