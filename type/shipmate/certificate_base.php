@@ -8,8 +8,8 @@ $quiz_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod',
 
 // Date formatting - can be customized if necessary
 $certificatedate = '';
-if ($certrecord->certdate > 0) {
-    $certdate = $certrecord->certdate;
+if ($certrecord->timecreated > 0) {
+    $certdate = $certrecord->timecreated;
 } else {
     if ($quiz_item) {
         $quizgrade = new grade_grade(array('itemid'=>$quiz_item->id, 'userid'=>$USER->id));
@@ -58,11 +58,7 @@ if($certificate->printnumber) {
     $code = $certrecord->code;
 }
 
-//Print the student name
-$studentname = '';
-$studentname = $certrecord->studentname;
-$classname = '';
-$classname = $certrecord->classname;
+
 //Print the credit hours
 if($certificate->printhours) {
     $credithours =  $strcredithours.': '.$certificate->printhours;
@@ -84,25 +80,24 @@ $pdf->SetAutoPageBreak(false, 0);
 // Add images and lines
 $pdf->Image("$CFG->dirroot/mod/certificate/pix/borders/shipmate2.jpg", 10, 12, 770, 588);
 $pdf->Image("$CFG->dirroot/mod/certificate/pix/watermarks/certificate.jpg", 85, 120);
-
-print_signature($pdf, $certificate, 320, 430, '', '');
+certificate_print_image($pdf, $certificate, CERT_IMAGE_SIGNATURE, 320, 430, '', '');
 
 $pdf->SetLineWidth(1);
 $pdf->Line(320, 483, 460, 483); //sigsize 140 * 63
-cert_printtext($pdf, 320, 493, 'L', 'FreeSerif', 'B', 10, 'Training Developer Signature');
+certificate_print_text($pdf, 320, 493, 'L', 'freeserif', 'B', 10, 'Training Developer Signature');
 
 $pdf->Line(130, 483, 270, 483);
-cert_printtext($pdf, 130, 493, 'L', 'FreeSerif', 'B', 10, 'Employer Signature');
+certificate_print_text($pdf, 130, 493, 'L', 'freeserif', 'B', 10, 'Employer Signature');
 
 $pdf->SetFontSize(12);
 $pdf->SetXY(540, 372);
-$pdf->setFont("FreeSerif", "I", 12);
+$pdf->setFont("freeserif", "I", 12);
 $pdf->Cell(200, 14, 'Developed and Authored by:', 0, 'J');
 $pdf->SetXY(540, 406);
-$pdf->setFont("FreeSerif", "B", 12);
+$pdf->setFont("freeserif", "B", 12);
 $pdf->Cell(200, 14, 'ShipMate, Inc.', 0, 'J');
 
-$pdf->setFont("FreeSerif", "", 12);
+$pdf->setFont("freeserif", "", 12);
 $address = "780 Buckaroo Trail, Suite D\nSisters, OR 97759-0787\n".
         "Tel: +1 (310) 370-3600\nFax: +1 (310) 370-5700\nhttp://www.shipmate.com/";
 
@@ -115,22 +110,21 @@ $pdf->Image("$CFG->dirroot/mod/certificate/pix/title.png", 115, 70, 0, 0);
 $pdf->SetTextColor(0,0,0);
 
 $pdf->SetXY(75, 158);
-$pdf->setFont("FreeSerif", "", 28);
-$pdf->MultiCell(640, 30, $classname, 0, 'C');
+$pdf->setFont("freeserif", "", 28);
+$pdf->MultiCell(640, 30, $course->fullname, 0, 'C');
 
-//cert_printtext(145, 150, 'C', 'FreeSerif', 'B', 30, $classname);
-cert_printtext($pdf, 35, 230, 'C', 'FreeSerif', 'I', 20, 'presented to');
-cert_printtext($pdf, 35, 260, 'C', 'FreeSerif', 'B', 30, $studentname);
-
+certificate_print_text($pdf, 35, 230, 'C', 'freeserif', 'I', 20, 'presented to');
+certificate_print_text($pdf, 35, 260, 'C', 'freeserif', 'B', 30, fullname($USER));
 
 
-cert_printtext($pdf, 35, 310, 'C', 'FreeSerif', 'B', 20, $certificatedate);
+
+certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, $certificatedate);
 if ($certdate !=0) {
-    cert_printtext($pdf, 35, 340, 'C', 'FreeSerif', 'BI', 20, expiry_date($certdate, $timeformat));
+    certificate_print_text($pdf, 35, 340, 'C', 'freeserif', 'BI', 20, expiry_date($certdate, $timeformat));
 }
-cert_printtext($pdf, 35, 370, 'C', 'FreeSerif', 'B', 20, 'Score : '.$coursegrade);
-cert_printtext($pdf, 35, 540, 'C', 'FreeSerif', '', 12, "Verification code :".$code);
+certificate_print_text($pdf, 35, 370, 'C', 'freeserif', 'B', 20, 'Score : '.$coursegrade);
+certificate_print_text($pdf, 35, 540, 'C', 'freeserif', '', 12, "Verification code :".$code);
 
-cert_printtext($pdf, 30, 515, 'C', 'FreeSerif', 'I', 10, $certificate->customtext);
+certificate_print_text($pdf, 30, 515, 'C', 'freeserif', 'I', 10, $certificate->customtext);
 
 ?>
