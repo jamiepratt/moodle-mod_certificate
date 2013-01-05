@@ -1,8 +1,10 @@
 <?php
-function expiry_date($certdate, $timeformat) {
+if (!function_exists('expiry_date')) {
+    function expiry_date($certdate, $timeformat) {
     return '';
 }
+}
 
-require_once($CFG->dirroot.'/mod/certificate/type/shipmate/certificate_base.php');
+require($CFG->dirroot.'/mod/certificate/type/shipmate/certificate_base.php');
 
 ?>
