@@ -28,6 +28,8 @@ require_once('../../config.php');
 require_once('lib.php');
 require_once("$CFG->libdir/pdflib.php");
 
+set_time_limit(0);
+
 $id = optional_param('id', 0, PARAM_INT);    // Course Module ID
 if (!$id) {
     require_capability('mod/certificate:manage', context_system::instance());
@@ -69,15 +71,24 @@ foreach ($certrecords as $certrecord) {
     // Load the specific certificatetype
     require("$CFG->dirroot/mod/certificate/type/$certificate->certificatetype/certificate.php");
 
-    // Remove full-stop at the end if it exists, to avoid "..pdf" being created and being filtered by clean_filename
-    $certname = rtrim($certificate->name, '.');
-    $filename = clean_filename("$certname.pdf");
-    if ($certificate->savecert == 1) {
-        // PDF contents are now in $file_contents as a string
-        $file_contents = $pdf->Output('', 'S');
-        certificate_save_pdf($file_contents, $certrecord->id, $filename, $context->id);
+    if ($certdate !== 0) {
+        // Remove full-stop at the end if it exists, to avoid "..pdf" being created and being filtered by clean_filename
+        $certname = rtrim($certificate->name, '.');
+        $filename = clean_filename("$certname.pdf");
+        if ($certificate->savecert == 1) {
+            // PDF contents are now in $file_contents as a string
+            $file_contents = $pdf->Output('', 'S');
+            certificate_save_pdf($file_contents, $certrecord->id, $filename, $context->id);
+        }
+        echo "Successfully generated certificate for user \"".fullname($USER)."\".<br />\n";
+        //$certrecord->timecreated = $certdate;
+        //$DB->update_record('certificate_issues', $certrecord);
+    } else {
+        echo "<strong>Error.</strong> Cannot find date and grade for \"".fullname($USER)."\".<br />\n";
+        print_object(compact('USER', 'certrecord', 'quizgradeobj', 'quizgrade', 'scormgradeobj', 'scormgrade', 'certdate'));
     }
-    echo "Successfully generated certificate for user \"".fullname($USER)."\".<br />\n";
+    flush();
+    //print_object(compact('USER', 'certrecord', 'quizgradeobj', 'quizgrade', 'scormgradeobj', 'scormgrade', 'certdate'));
     unset($pdf);
 }
 session_set_user($realuser);
