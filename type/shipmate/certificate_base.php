@@ -8,49 +8,64 @@ $quiz_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod',
 
 // Date formatting - can be customized if necessary
 $certificatedate = '';
-if ($certrecord->timecreated > 0) {
-    $certdate = $certrecord->timecreated;
-} else {
-    if ($quiz_item) {
-        $quizgrade = new grade_grade(array('itemid'=>$quiz_item->id, 'userid'=>$USER->id));
-    } else {
+
+if ($quiz_item) {
+    $quizgradeobj = new grade_grade(array('itemid'=>$quiz_item->id, 'userid'=>$USER->id));
+    if (!$quizgradeobj->timemodified) {
         $quizgrade = false;
-    }
-    if ($scorm_item) {
-        $scormgrade = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id));
     } else {
-        $scormgrade = false;
+        $quiz_item->gradetype = GRADE_TYPE_VALUE;
+        $quizgradestring =
+                grade_format_gradevalue($quizgradeobj->finalgrade, $quiz_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
+        $quizgradevalue = (float)rtrim($quizgradestring, ' %');
+        $quizgrade = true;
     }
-    
-    if ($scormgrade->timemodified || $quizgrade->timemodified) {
-        if ((($quizgrade->timemodified && $scormgrade->timemodified)
-                    && ($quizgrade->finalgrade > $scormgrade->finalgrade))
-              || ($quizgrade->timemodified && !$scormgrade->timemodified)) {
-            $certdate = $quizgrade->timemodified;
+} else {
+    $quizgrade = false;
+}
+if ($scorm_item) {
+    $scormgradeobj = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id));
+    if (!$scormgradeobj->timemodified) {
+        $scormgrade = false;
+    } else {
+        $scorm_item->gradetype = GRADE_TYPE_VALUE;
+        $scormgradestring =
+                grade_format_gradevalue($scormgradeobj->finalgrade, $scorm_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
+        $scormgradevalue = (float)rtrim($scormgradestring, ' %');
+        $scormgrade = true;
+    }
+} else {
+    $scormgrade = false;
+}
+
+
+if ($quizgrade) {
+    if ($quizgradevalue < 80) {
+        if ($scormgrade && ($scormgradevalue >= 80)) {
+            $certdate = $scormgradeobj->timemodified;
+            $coursegrade = $scormgradestring;
         } else {
-            $certdate = $scormgrade->timemodified;
+            $certdate = $quizgradeobj->timemodified;
+            $coursegrade = $quizgradestring;
         }
     } else {
-        $certdate = 0;
+        $certdate = $quizgradeobj->timemodified;
+        $coursegrade = $quizgradestring;
     }
-}
-if ($certificate->printdate > 0) {
-    $timeformat = get_string('strftimedaydate');
-    if ($certdate != 0) {
-        $certificatedate = userdate($certdate, $timeformat);
-    } else {
-        $certificatedate = '-';
-    }
-}
-
-
-if ($grade = new grade_grade(array('itemid'=>$course_item->id, 'userid'=>$USER->id))) {
-    $course_item->gradetype = GRADE_TYPE_VALUE;
-    $coursegrade = grade_format_gradevalue($grade->finalgrade, $course_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
+} else if ($scormgrade) {
+    $certdate = $scormgradeobj->timemodified;
+    $coursegrade = $scormgradestring;
 } else {
+    $certdate = 0;
     $coursegrade = '-';
 }
 
+$timeformat = get_string('strftimedaydate');
+if ($certdate != 0) {
+    $certificatedate = userdate($certdate, $timeformat);
+} else {
+    $certificatedate = '-';
+}
 
 // Print the code number
 $code = '';
