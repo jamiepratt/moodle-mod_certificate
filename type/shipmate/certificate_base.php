@@ -2,85 +2,6 @@
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from view.php in mod/tracker
 }
-$course_item = grade_item::fetch_course_item($COURSE->id);
-$scorm_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod', 'itemmodule'=>'scorm'));
-$quiz_item = grade_item::fetch(array('courseid'=>$COURSE->id, 'itemtype'=>'mod', 'itemmodule'=>'quiz'));
-
-// Date formatting - can be customized if necessary
-$certificatedate = '';
-
-if ($quiz_item) {
-    $quizgradeobj = new grade_grade(array('itemid'=>$quiz_item->id, 'userid'=>$USER->id));
-    if (!$quizgradeobj->timemodified) {
-        $quizgrade = false;
-    } else {
-        $quiz_item->gradetype = GRADE_TYPE_VALUE;
-        $quizgradestring =
-                grade_format_gradevalue($quizgradeobj->finalgrade, $quiz_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
-        $quizgradevalue = (float)rtrim($quizgradestring, ' %');
-        $quizgrade = true;
-    }
-} else {
-    $quizgrade = false;
-}
-if ($scorm_item) {
-    $scormgradeobj = new grade_grade(array('itemid'=>$scorm_item->id, 'userid'=>$USER->id));
-    if (!$scormgradeobj->timemodified) {
-        $scormgrade = false;
-    } else {
-        $scorm_item->gradetype = GRADE_TYPE_VALUE;
-        $scormgradestring =
-                grade_format_gradevalue($scormgradeobj->finalgrade, $scorm_item, true, GRADE_DISPLAY_TYPE_PERCENTAGE, 2);
-        $scormgradevalue = (float)rtrim($scormgradestring, ' %');
-        $scormgrade = true;
-    }
-} else {
-    $scormgrade = false;
-}
-
-
-if ($quizgrade) {
-    if ($quizgradevalue < 80) {
-        if ($scormgrade && ($scormgradevalue >= 80)) {
-            $certdate = $scormgradeobj->timemodified;
-            $coursegrade = $scormgradestring;
-        } else {
-            $certdate = $quizgradeobj->timemodified;
-            $coursegrade = $quizgradestring;
-        }
-    } else {
-        $certdate = $quizgradeobj->timemodified;
-        $coursegrade = $quizgradestring;
-    }
-} else if ($scormgrade) {
-    $certdate = $scormgradeobj->timemodified;
-    $coursegrade = $scormgradestring;
-} else {
-    $certdate = 0;
-    $coursegrade = '-';
-}
-
-$timeformat = get_string('strftimedaydate');
-if ($certdate != 0) {
-    $certificatedate = userdate($certdate, $timeformat);
-} else {
-    $certificatedate = '-';
-}
-
-// Print the code number
-$code = '';
-if($certificate->printnumber) {
-    $code = $certrecord->code;
-}
-
-
-//Print the credit hours
-if($certificate->printhours) {
-    $credithours =  $strcredithours.': '.$certificate->printhours;
-} else {
-    $credithours = '';
-}
-
 //Create new PDF document
 
 $pdf = new TCPDF('L', 'pt', 'Letter', true, 'UTF-8', false);
@@ -131,14 +52,19 @@ $pdf->MultiCell(640, 30, $course->fullname, 0, 'C');
 certificate_print_text($pdf, 35, 230, 'C', 'freeserif', 'I', 20, 'presented to');
 certificate_print_text($pdf, 35, 260, 'C', 'freeserif', 'B', 30, fullname($USER));
 
+if ($modinfo = certificate_get_mod_grade($course, $certificate->printdate, $USER->id)) {
+    $certdate = $modinfo->dategraded;
+} else {
+    $certdate = 0;
+}
 
-
-certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, $certificatedate);
+certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, certificate_get_date($certificate, $certrecord, $course));
 if ($certdate !=0) {
     certificate_print_text($pdf, 35, 340, 'C', 'freeserif', 'BI', 20, expiry_date($certdate, $timeformat));
 }
-certificate_print_text($pdf, 35, 370, 'C', 'freeserif', 'B', 20, 'Score : '.$coursegrade);
-certificate_print_text($pdf, 35, 540, 'C', 'freeserif', '', 12, "Verification code :".$code);
+certificate_print_text($pdf, 35, 370, 'C', 'freeserif', 'B', 20, 'Score : '.certificate_get_grade($certificate, $course));
+certificate_print_text($pdf, 35, 540, 'C', 'freeserif', '', 12,
+                                                "Verification code :".certificate_get_code($certificate, $certrecord));
 
 certificate_print_text($pdf, 30, 515, 'C', 'freeserif', 'I', 10, $certificate->customtext);
 
