@@ -114,7 +114,7 @@ if (!$users = certificate_get_issues($certificate->id, $DB->sql_fullname(), $gro
     exit();
 }
 
-if ($datessubmitted) {
+if (is_siteadmin() && $datessubmitted) {
     $realuser = fullclone($USER);
     foreach ($_POST['date'] as $userid => $date) {
         $oldtimeparts = usergetdate($users[$userid]->timecreated, $realuser->timezone);
@@ -304,7 +304,7 @@ $table->head  = array($strto, $strdate, $strgrade, $strcode);
 $table->align = array("left", "left", "center", "center");
 foreach ($users as $user) {
     $name = $OUTPUT->user_picture($user) . fullname($user);
-    if (!$editdates) {
+    if ((!$editdates) || (!is_siteadmin())) {
         $date = userdate($user->timecreated) . certificate_print_user_files($certificate, $user->id, $context->id);
     } else {
         $date = '';
