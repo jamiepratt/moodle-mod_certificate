@@ -651,7 +651,7 @@ function certificate_get_issue($course, $user, $certificate, $cm) {
     $certissue->certificateid = $certificate->id;
     $certissue->userid = $user->id;
     $certissue->code = certificate_generate_code();
-    $certissue->timecreated =  time();
+    $certissue->timecreated =  0;
     $certissue->id = $DB->insert_record('certificate_issues', $certissue);
 
     // Email to the teachers and anyone else
