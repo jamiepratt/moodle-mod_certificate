@@ -59,7 +59,8 @@ function certificate_generate_all_new_from_grade() {
             $gradeitem = grade_get_grade_items_for_activity($gradedmodule);
             $gradeitem = array_pop($gradeitem);
             $grades = array();
-            if ($graderecords = $DB->get_records_select('grade_grades', "itemid = :itemid AND timemodified > :last",
+            if ($graderecords = $DB->get_records_select('grade_grades',
+                "itemid = :itemid AND timemodified > :last AND finalgrade > 80",
                 array("itemid" => $gradeitem->id, "last" => $certificatelastgenerate))) {
                 foreach ($graderecords as $graderecord) {
                     $grades[$graderecord->userid] = new grade_grade($graderecord, false);
