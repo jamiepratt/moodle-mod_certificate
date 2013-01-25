@@ -27,11 +27,13 @@
 
 require_once('../../config.php');
 require_once('lib.php');
+require_once('regeneratelib.php');
 require_once("$CFG->libdir/pdflib.php");
 
 set_time_limit(0);
 
 $id = optional_param('id', 0, PARAM_INT);    // Course Module ID
+$since = optional_param('since', 0, PARAM_INT);
 if (!$id) {
     require_capability('mod/certificate:manage', context_system::instance());
     $sql = 'SELECT cm.id, c.fullname AS coursename, ce.name FROM {course_modules} cm, {modules} m, {certificate} ce, {course} c '.
@@ -57,9 +59,6 @@ if (!$certificate = $DB->get_record('certificate', array('id'=> $cm->instance)))
     print_error('course module is incorrect');
 }
 
-$certrecords = $DB->get_records('certificate_issues', array('certificateid'=> $certificate->id), '',
-                                'userid, certificateid, id, timecreated, code');
-
 require_login($course->id, false, $cm);
 $context = get_context_instance(CONTEXT_MODULE, $cm->id);
 require_capability('mod/certificate:manage', $context);
@@ -74,7 +73,6 @@ if ($graderecords = $DB->get_records('grade_grades', array("itemid" => $gradeite
     }
 }
 
-$realuser = fullclone($USER);
 
 foreach ($grades as $grade) {
     print_object(array('finalgrade' => $grade->finalgrade,
@@ -82,21 +80,7 @@ foreach ($grades as $grade) {
                        'timecreated' => $grade->timecreated?userdate($grade->timecreated):0,
                        'timemodified' => $grade->timemodified?userdate($grade->timemodified):0));
     if ($grade->finalgrade >= 80) {
-        if (isset($certrecords[$grade->userid])) {
-            $certrecord = $certrecords[$grade->userid];
-            unset($certrecords[$grade->userid]);
-            $certrecord->timecreated = $grade->timemodified?$grade->timemodified:time();
-            $DB->update_record('certificate_issues', $certrecord);
-        } else {
-            $certrecord = new stdClass();
-            $certrecord->certificateid = $certificate->id;
-            $certrecord->userid = $grade->userid;
-            $certrecord->code = certificate_generate_code();
-            $certrecord->timecreated =  $grade->timemodified;
-            $certrecord->id = $DB->insert_record('certificate_issues', $certrecord);
-        }
-        $USER = $DB->get_record('user', array('id' => $certrecord->userid));
-        echo "Successfully generated certificate record for user \"".fullname($USER)."\".<br />\n";
+        certificate_generate_from_grade($context, $certificate, $grade);
     } else {
         $USER = $DB->get_record('user', array('id' => $grade->userid));
         if (isset($certrecords[$grade->userid])) {
@@ -108,21 +92,7 @@ foreach ($grades as $grade) {
         flush();
         continue;
     }
-    // Load the specific certificatetype
-    require("$CFG->dirroot/mod/certificate/type/$certificate->certificatetype/certificate.php");
-    // Remove full-stop at the end if it exists, to avoid "..pdf" being created and being filtered by clean_filename
-    $certname = rtrim($certificate->name, '.');
-    $filename = clean_filename("$certname.pdf");
-    if ($certificate->savecert == 1) {
-        // PDF contents are now in $file_contents as a string
-        $file_contents = $pdf->Output('', 'S');
-        certificate_save_pdf($file_contents, $certrecord->id, $filename, $context->id);
-    }
-    echo "Successfully generated certificate for user \"".fullname($USER)."\".<br />\n";
-    flush();
-    unset($pdf);
 }
-session_set_user($realuser);
 if (count($certrecords)) {
     $certrecordids = array();
     foreach ($certrecords as $certrecord) {

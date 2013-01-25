@@ -263,6 +263,11 @@ function certificate_supports($feature) {
  * TODO:This needs to be done
  */
 function certificate_cron () {
+    global $CFG;
+    require_once('lib.php');
+    require_once('regeneratelib.php');
+    require_once("$CFG->libdir/pdflib.php");
+    certificate_generate_all_new_from_grade();
     return true;
 }
 
