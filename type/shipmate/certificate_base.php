@@ -52,7 +52,7 @@ $pdf->MultiCell(640, 30, $course->fullname, 0, 'C');
 certificate_print_text($pdf, 35, 230, 'C', 'freeserif', 'I', 20, 'presented to');
 certificate_print_text($pdf, 35, 260, 'C', 'freeserif', 'B', 30, fullname($USER));
 
-$modinfo = certificate_get_mod_grade($course, $certificate->printdate, $USER->id);
+$modinfo = certificate_get_mod_grade($course, $certificate->printgrade, $USER->id);
 
 if ($certrecord->timecreated == 0 && $modinfo = certificate_get_mod_grade($course, $certificate->printdate, $USER->id)) {
     $certdate = $modinfo->dategraded;
@@ -61,7 +61,7 @@ if ($certrecord->timecreated == 0 && $modinfo = certificate_get_mod_grade($cours
     $certdate = $certrecord->timecreated;
 }
 
-certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, certificate_get_date($certificate, $certrecord, $course));
+certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, userdate($certdate, $timeformat));
 if ($certdate !=0) {
     certificate_print_text($pdf, 35, 340, 'C', 'freeserif', 'BI', 20, $expirydatefunc($certdate, $timeformat));
 }
