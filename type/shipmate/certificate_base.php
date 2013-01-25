@@ -63,7 +63,7 @@ if ($certrecord->timecreated == 0 && $modinfo = certificate_get_mod_grade($cours
 
 certificate_print_text($pdf, 35, 310, 'C', 'freeserif', 'B', 20, certificate_get_date($certificate, $certrecord, $course));
 if ($certdate !=0) {
-    certificate_print_text($pdf, 35, 340, 'C', 'freeserif', 'BI', 20, expiry_date($certdate, $timeformat));
+    certificate_print_text($pdf, 35, 340, 'C', 'freeserif', 'BI', 20, $expirydatefunc($certdate, $timeformat));
 }
 certificate_print_text($pdf, 35, 370, 'C', 'freeserif', 'B', 20, 'Score : '.$modinfo->percentage);
 certificate_print_text($pdf, 35, 540, 'C', 'freeserif', '', 12,
