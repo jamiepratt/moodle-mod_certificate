@@ -24,6 +24,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once(dirname(__FILE__) . '/../../../../local/iomad_settings/lang/en/local_iomad_settings.php');
+
 $string['addlinklabel'] = 'Add another linked activity option';
 $string['addlinktitle'] = 'Click to add another linked activity option';
 $string['areaintro'] = 'Certificate introduction';
@@ -127,8 +129,8 @@ $string['landscape'] = 'Landscape';
 $string['lastviewed'] = 'You last received this certificate on:';
 $string['letter'] = 'Letter';
 $string['lockingoptions'] = 'Locking Options';
-$string['modulename'] = 'Certificate';
-$string['modulenameplural'] = 'Certificates';
+$string['modulename'] = 'Iomad Certificate';
+$string['modulenameplural'] = 'Iomad Certificates';
 $string['mycertificates'] = 'My Certificates';
 $string['nocertificates'] = 'There are no certificates';
 $string['nocertificatesissued'] = 'There are no certificates that have been issued';

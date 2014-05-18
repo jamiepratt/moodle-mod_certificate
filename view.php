@@ -43,7 +43,11 @@ if (!$certificate = $DB->get_record('certificate', array('id'=> $cm->instance)))
     print_error('course module is incorrect');
 }
 
-require_login($course->id, false, $cm);
+// IOMAD - If has ability to view completion reports should be able to see the certificates
+if (!has_capability('local/report_completion:view',context_system::instance())) {
+    require_login($course->id, true, $cm);
+}
+
 $context = context_module::instance($cm->id);
 require_capability('mod/certificate:view', $context);
 

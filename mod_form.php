@@ -30,6 +30,7 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once ($CFG->dirroot.'/course/moodleform_mod.php');
 require_once($CFG->dirroot.'/mod/certificate/lib.php');
+require_once($CFG->dirroot.'/local/iomad_settings/certificate/mod_form_lib.php');
 
 class mod_certificate_mod_form extends moodleform_mod {
 
@@ -127,6 +128,8 @@ class mod_certificate_mod_form extends moodleform_mod {
         $mform->addElement('textarea', 'customtext', get_string('customtext', 'certificate'), array('cols'=>'40', 'rows'=>'4', 'wrap'=>'virtual'));
         $mform->setType('customtext', PARAM_RAW);
         $mform->addHelpButton('customtext', 'customtext', 'certificate');
+
+        add_iomad_settings_elements($mform);
 
         // Design Options
         $mform->addElement('header', 'designoptions', get_string('designoptions', 'certificate'));
