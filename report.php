@@ -32,6 +32,10 @@ $sort = optional_param('sort', '', PARAM_RAW);
 $download = optional_param('download', '', PARAM_ALPHA);
 $action = optional_param('action', '', PARAM_ALPHA);
 
+$editdates = optional_param('editdates', 0, PARAM_BOOL);
+$datessubmitted = optional_param('datessubmitted', 0, PARAM_BOOL);
+
+
 $page = optional_param('page', 0, PARAM_INT);
 $perpage = optional_param('perpage', CERT_PER_PAGE, PARAM_INT);
 
@@ -51,6 +55,9 @@ if ($download) {
 }
 if ($action) {
     $url->param('action', $action);
+}
+if ($editdates) {
+    $url->param('editdates', $editdates);
 }
 $PAGE->set_url($url);
 
@@ -106,6 +113,46 @@ if (!$users = certificate_get_issues($certificate->id, $DB->sql_fullname(), $gro
     echo $OUTPUT->footer($course);
     exit();
 }
+
+if (is_siteadmin() && $datessubmitted) {
+    $realuser = fullclone($USER);
+    foreach ($_POST['date'] as $userid => $date) {
+        $oldtimeparts = usergetdate($users[$userid]->timecreated, $realuser->timezone);
+        $newtimestamp = make_timestamp($date['years'], $date['months'], $date['days'], $oldtimeparts['hours'],
+                                        $oldtimeparts['minutes'], $oldtimeparts['seconds'], $realuser->timezone);
+        if (abs($users[$userid]->timecreated - $newtimestamp) >= DAYSECS) {
+            $params = array('timecreated' => $newtimestamp,
+                            'userid' => $userid,
+                            'ciid' => $certificate->id);
+
+            $DB->execute("UPDATE {certificate_issues} SET timecreated = :timecreated  ".
+                        "WHERE userid = :userid AND certificateid  = :ciid", $params);
+
+            if ($certificate->savecert == 1) {
+                require_once("$CFG->libdir/pdflib.php");
+                $USER = $users[$userid];
+                // Create new certificate record, or return existing record
+
+                $certrecord = $DB->get_record('certificate_issues', array('certificateid' => $certificate->id,
+                                                                          'userid' => $USER->id));
+                // Load the specific certificatetype
+                require("$CFG->dirroot/mod/certificate/type/$certificate->certificatetype/certificate.php");
+
+                // Remove full-stop at the end if it exists, to avoid "..pdf" being created and being filtered by clean_filename
+                $certname = rtrim($certificate->name, '.');
+                $filename = clean_filename("$certname.pdf");
+                // PDF contents are now in $file_contents as a string
+                $file_contents = $pdf->Output('', 'S');
+                certificate_save_pdf($file_contents, $certrecord->id, $filename, $context->id);
+                unset($pdf);
+            }
+        }
+    }
+    session_set_user($realuser);
+
+    redirect($url);
+}
+
 
 if ($download == "ods") {
     require_once("$CFG->libdir/odslib.class.php");
@@ -257,7 +304,15 @@ $table->head  = array($strto, $strdate, $strgrade, $strcode);
 $table->align = array("left", "left", "center", "center");
 foreach ($users as $user) {
     $name = $OUTPUT->user_picture($user) . fullname($user);
-    $date = userdate($user->timecreated) . certificate_print_user_files($certificate, $user->id, $context->id);
+    if ((!$editdates) || (!is_siteadmin())) {
+        $date = userdate($user->timecreated) . certificate_print_user_files($certificate, $user->id, $context->id);
+    } else {
+        $date = '';
+        foreach (array('days', 'months', 'years') as $element) {
+            $date .= html_writer::select_time($element, "date[$user->id][{$element}]", $user->timecreated);
+        }
+        $date .= certificate_print_user_files($certificate, $user->id, $context->id);
+    }
     $code = $user->code;
     $table->data[] = array ($name, $date, certificate_get_grade($certificate, $course, $user->id), $code);
 }
@@ -273,8 +328,23 @@ $tablebutton->data[] = array($btndownloadods, $btndownloadxls, $btndownloadtxt);
 echo $OUTPUT->header();
 groups_print_activity_menu($cm, $CFG->wwwroot . '/mod/certificate/report.php?id='.$id);
 echo $OUTPUT->heading(get_string('modulenameplural', 'certificate'));
+
+
+
 echo $OUTPUT->paging_bar($usercount, $page, $perpage, $url);
 echo '<br />';
-echo html_writer::table($table);
+
+$table = html_writer::table($table);
+if ($editdates) {
+    $formurl = new moodle_url($url, array('datessubmitted' => 1));
+    $hiddenurlparams = html_writer::input_hidden_params($formurl);
+    $submitbutton = html_writer::empty_tag('input', array('type' => 'submit', 'value'=>'Submit Changed Dates'));
+    $submitbuttondiv = html_writer::tag('div', $submitbutton, array('style' => 'margin:auto; width:50%'));
+    $formattributes = array('action' => $formurl->out_omit_querystring(), 'method' => 'post');
+    echo html_writer::tag('form', $hiddenurlparams.$table.$submitbuttondiv, $formattributes);
+} else {
+    echo $table;
+}
+
 echo html_writer::tag('div', html_writer::table($tablebutton), array('style' => 'margin:auto; width:50%'));
 echo $OUTPUT->footer($course);
