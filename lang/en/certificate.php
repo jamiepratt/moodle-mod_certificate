@@ -20,11 +20,9 @@
  *
  * @package    mod
  * @subpackage certificate
- * @copyright  Mark Nelson <markn@moodle.com>
+ * @copyright  Mark Nelson <mark@moodle.com.au>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once(dirname(__FILE__) . '/../../../../local/iomad_settings/lang/en/local_iomad_settings.php');
 
 $string['addlinklabel'] = 'Add another linked activity option';
 $string['addlinktitle'] = 'Click to add another linked activity option';
@@ -129,8 +127,8 @@ $string['landscape'] = 'Landscape';
 $string['lastviewed'] = 'You last received this certificate on:';
 $string['letter'] = 'Letter';
 $string['lockingoptions'] = 'Locking Options';
-$string['modulename'] = 'Iomad Certificate';
-$string['modulenameplural'] = 'Iomad Certificates';
+$string['modulename'] = 'Certificate';
+$string['modulenameplural'] = 'Certificates';
 $string['mycertificates'] = 'My Certificates';
 $string['nocertificates'] = 'There are no certificates';
 $string['nocertificatesissued'] = 'There are no certificates that have been issued';
@@ -196,6 +194,7 @@ $string['typeletter_embedded'] = 'Letter Embedded';
 $string['typeletter_non_embedded'] = 'Letter Non-Embedded';
 $string['typeshipmate'] = 'Shipmate (with 3 year expiry)';
 $string['typeshipmate2yearexpiry'] = 'Shipmate (with 2 year expiry)';
+$string['typeshipmate1yearexpiry'] = 'Shipmate (with 1 year expiry)';
 $string['typeshipmatenoexpiry'] = 'Shipmate (without expiry)';
 $string['unsupportedfiletype'] = 'File must be a jpeg or png file';
 $string['uploadimage'] = 'Upload image';

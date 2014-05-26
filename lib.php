@@ -56,7 +56,7 @@ function certificate_add_instance($certificate) {
     $certificate->timemodified = $certificate->timecreated;
 
     return $DB->insert_record('certificate', $certificate);
-}
+    }
 
 /**
  * Update certificate instance.
@@ -127,8 +127,8 @@ function certificate_reset_userdata($data) {
 
     if (!empty($data->reset_certificate)) {
         $sql = "SELECT cert.id
-                  FROM {certificate} cert
-                 WHERE cert.course = :courseid";
+                FROM {certificate} cert
+                WHERE cert.course = :courseid";
         $DB->delete_records_select('certificate_issues', "certificateid IN ($sql)", array('courseid' => $data->courseid));
         $status[] = array('component' => $componentstr, 'item' => get_string('certificateremoved', 'certificate'), 'error' => false);
     }
@@ -228,9 +228,9 @@ function certificate_get_participants($certificateid) {
     global $DB;
 
     $sql = "SELECT DISTINCT u.id, u.id
-              FROM {user} u, {certificate_issues} a
-             WHERE a.certificateid = :certificateid
-               AND u.id = a.userid";
+            FROM {user} u, {certificate_issues} a
+            WHERE a.certificateid = :certificateid
+            AND u.id = a.userid";
     return  $DB->get_records_sql($sql, array('certificateid' => $certificateid));
 }
 
@@ -737,12 +737,16 @@ function certificate_get_issues($certificateid, $sort="ci.timecreated ASC", $gro
     $namefields = get_all_user_name_fields(true, 'u');
     $picturefields = user_picture::fields('u');
     $users = $DB->get_records_sql("SELECT u.id, $namefields, $picturefields, ci.code, ci.timecreated
-                                     FROM {user} u
-                               INNER JOIN {certificate_issues} ci
-                                       ON u.id = ci.userid
-                                    WHERE u.deleted = 0
-                                      AND ci.certificateid = :certificateid $conditionssql
-                                 ORDER BY {$sort}", $allparams, $page * $perpage, $perpage);
+                                   FROM {user} u
+                                   INNER JOIN {certificate_issues} ci
+                                   ON u.id = ci.userid
+                                   WHERE u.deleted = 0
+                                   AND ci.certificateid = :certificateid
+                                   $conditionssql
+                                   ORDER BY {$sort}",
+                                   $allparams,
+                                   $page * $perpage,
+                                   $perpage);
 
     return $users;
 }
@@ -757,9 +761,9 @@ function certificate_get_attempts($certificateid) {
     global $DB, $USER;
 
     $sql = "SELECT *
-              FROM {certificate_issues} i
-             WHERE certificateid = :certificateid
-               AND userid = :userid";
+            FROM {certificate_issues} i
+            WHERE certificateid = :certificateid
+            AND userid = :userid";
     if ($issues = $DB->get_records_sql($sql, array('certificateid' => $certificateid, 'userid' => $USER->id))) {
         return $issues;
     }
@@ -875,13 +879,13 @@ function certificate_get_mods() {
             if ($section->sequence) {
                 switch ($COURSE->format) {
                     case "topics":
-                        $sectionlabel = $strtopic;
+                    $sectionlabel = $strtopic;
                     break;
                     case "weeks":
-                        $sectionlabel = $strweek;
+                    $sectionlabel = $strweek;
                     break;
                     default:
-                        $sectionlabel = $strsection;
+                    $sectionlabel = $strsection;
                 }
 
                 $sectionmods = explode(",", $section->sequence);
@@ -1130,8 +1134,8 @@ function certificate_get_date($certificate, $certrecord, $course, $userid = null
     if ($certificate->printdate == '2') {
         // Get the enrolment end date
         $sql = "SELECT MAX(c.timecompleted) as timecompleted
-                  FROM {course_completions} c
-                 WHERE c.userid = :userid
+                FROM {course_completions} c
+                WHERE c.userid = :userid
                    AND c.course = :courseid";
         if ($timecompleted = $DB->get_record_sql($sql, array('userid' => $userid, 'courseid' => $course->id))) {
             if (!empty($timecompleted->timecompleted)) {
@@ -1513,8 +1517,8 @@ function certificate_scan_image_dir($path) {
             $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
             if ($fileinfo->isFile() && in_array($extension, array('png', 'jpg', 'jpeg'))) {
                 $options[$filename] = pathinfo($filename, PATHINFO_FILENAME);
+                    }
+                }
             }
-        }
-    }
     return $options;
 }

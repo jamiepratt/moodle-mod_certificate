@@ -4,7 +4,7 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 //Create new PDF document
 
-$pdf = new TCPDF('L', 'pt', 'Letter', true, 'UTF-8', false);
+$pdf = new PDF('L', 'pt', 'Letter', true, 'UTF-8', false);
 
 $timeformat = get_string('strftimedaydate');
 
